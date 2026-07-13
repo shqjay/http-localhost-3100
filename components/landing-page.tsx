@@ -47,6 +47,7 @@ import {
 import { cn } from "@/lib/cn";
 
 const assetPrefix = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const registerUrl = assetPrefix + "/register/";
 
 const navItems = ["Features", "Showcase", "Timeline", "Pricing", "FAQ"];
 const navLabels: Record<string, string> = {
@@ -300,7 +301,7 @@ function Navigation() {
 
         <div className="flex items-center gap-2">
           <MagneticButton
-            href="#cta"
+            href={registerUrl}
             size="sm"
             variant="ghost"
             className="hidden sm:inline-flex"
@@ -343,7 +344,7 @@ function Navigation() {
               </a>
             ))}
             <a
-              href="#cta"
+              href={registerUrl}
               onClick={() => setOpen(false)}
               className="focus-ring mt-1 flex min-h-12 items-center justify-between rounded-xl bg-white px-4 text-sm font-semibold text-void"
             >
@@ -383,7 +384,7 @@ function HeroSection() {
           </Reveal>
           <Reveal delay={0.28}>
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-              <MagneticButton href="#pricing" variant="primary">
+              <MagneticButton href={registerUrl} variant="primary">
                 <span>申请私测</span>
                 <ArrowRight className="size-5" />
               </MagneticButton>
@@ -870,7 +871,7 @@ function PricingSection() {
                 ))}
               </div>
               <MagneticButton
-                href="#cta"
+                href={registerUrl}
                 className="mt-8 w-full justify-center"
                 variant={plan.popular ? "primary" : "secondary"}
               >
@@ -968,7 +969,7 @@ function CTASection() {
             </p>
           </div>
           <div className="flex flex-col gap-4 sm:flex-row lg:flex-col">
-            <MagneticButton href="mailto:hello@astraos.ai" variant="primary">
+            <MagneticButton href={registerUrl} variant="primary">
               <span>预约策略沟通</span>
               <ArrowRight className="size-5" />
             </MagneticButton>
