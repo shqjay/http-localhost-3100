@@ -46,6 +46,8 @@ import {
 } from "framer-motion";
 import { cn } from "@/lib/cn";
 
+const assetPrefix = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 const navItems = ["Features", "Showcase", "Timeline", "Pricing", "FAQ"];
 const navLabels: Record<string, string> = {
   Features: "功能",
@@ -137,21 +139,21 @@ const testimonials = [
     role: "首席营收官，Northstar Labs",
     body: "AstraOS 让我们的预测会议像提前进入了下一个十年。团队准备汇报之前，系统已经找到了真正的风险。",
     initials: "MR",
-    avatar: "/avatars/maya.png"
+    avatar: `${assetPrefix}/avatars/maya.png`
   },
   {
     name: "Elliot Chen",
     role: "产品副总裁，Lumina Cloud",
     body: "它不像一套普通软件，更像一位沉着的运营伙伴。每个界面都兼具品味、速度与克制。",
     initials: "EC",
-    avatar: "/avatars/elliot.png"
+    avatar: `${assetPrefix}/avatars/elliot.png`
   },
   {
     name: "Sofia Hart",
     role: "首席运营官，Meridian AI",
     body: "我们用一个实时指挥中心取代了四套割裂的汇报流程。清晰度真正改变了管理团队的工作方式。",
     initials: "SH",
-    avatar: "/avatars/sofia.png"
+    avatar: `${assetPrefix}/avatars/sofia.png`
   }
 ];
 

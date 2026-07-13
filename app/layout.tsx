@@ -24,10 +24,10 @@ export const metadata: Metadata = {
     "自主运营"
   ],
   alternates: {
-    canonical: "/"
+    canonical: siteUrl
   },
   openGraph: {
-    url: "/",
+    url: siteUrl,
     siteName: "AstraOS",
     title: "AstraOS - 自主营收智能",
     description:
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "/og-image.svg",
+        url: `${siteUrl}/og-image.svg`,
         width: 1200,
         height: 630,
         alt: "AstraOS 高级业务指挥界面"
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     title: "AstraOS - 自主营收智能",
     description:
       "由预测智能驱动，为现代团队打造的电影级业务指挥中心。",
-    images: ["/og-image.svg"]
+    images: [`${siteUrl}/og-image.svg`]
   },
   robots: {
     index: true,
