@@ -1,0 +1,295 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --background: #050816;
+  --foreground: #ffffff;
+  --font-inter: "Inter Variable";
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  overflow-x: clip;
+  scroll-padding-top: 96px;
+  background: var(--background);
+  text-rendering: geometricPrecision;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: clip;
+  background:
+    radial-gradient(circle at 18% 8%, rgba(124, 58, 237, 0.14), transparent 32rem),
+    radial-gradient(circle at 88% 16%, rgba(6, 182, 212, 0.10), transparent 28rem),
+    radial-gradient(circle at 72% 58%, rgba(246, 199, 110, 0.035), transparent 24rem),
+    linear-gradient(180deg, #050816 0%, #05070d 52%, #070911 100%);
+}
+
+body::before {
+  pointer-events: none;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+  background-size: 84px 84px;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+body::after {
+  pointer-events: none;
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  opacity: 0.045;
+  background-image:
+    radial-gradient(circle at 20% 30%, white 0 1px, transparent 1px),
+    radial-gradient(circle at 70% 20%, white 0 1px, transparent 1px),
+    radial-gradient(circle at 45% 80%, white 0 1px, transparent 1px);
+  background-size: 160px 160px, 220px 220px, 280px 280px;
+  mix-blend-mode: screen;
+}
+
+::selection {
+  background: rgba(6, 182, 212, 0.34);
+  color: white;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.glass {
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.025)),
+    rgba(8, 11, 22, 0.72);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    0 24px 72px rgba(0, 0, 0, 0.30);
+  backdrop-filter: blur(22px);
+}
+
+.gradient-border {
+  position: relative;
+  isolation: isolate;
+}
+
+.gradient-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.8), rgba(6, 182, 212, 0.52), rgba(255, 255, 255, 0.12));
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, #ffffff 0%, #c7d2fe 24%, #7c3aed 54%, #06b6d4 100%);
+  background-size: 180% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.aurora {
+  background:
+    radial-gradient(circle at 20% 20%, rgba(124, 58, 237, 0.42), transparent 26%),
+    radial-gradient(circle at 75% 25%, rgba(59, 130, 246, 0.34), transparent 24%),
+    radial-gradient(circle at 55% 72%, rgba(6, 182, 212, 0.26), transparent 28%);
+  filter: blur(56px);
+}
+
+.noise {
+  position: relative;
+}
+
+.noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.06;
+  background-image:
+    radial-gradient(circle at 25% 25%, rgba(255,255,255,.55) 0 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, rgba(255,255,255,.45) 0 1px, transparent 1px);
+  background-size: 18px 18px, 23px 23px;
+  mix-blend-mode: overlay;
+}
+
+.section-shell {
+  margin-inline: auto;
+  width: min(1220px, calc(100% - 32px));
+}
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.38);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.hero-console-crop::after {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 20;
+  height: 34%;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(to bottom, transparent, #050816 92%);
+}
+
+.feature-card {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.feature-card:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.benefit-row:first-child {
+  border-top-color: rgba(255, 255, 255, 0.18);
+}
+
+.timeline-card {
+  box-shadow: 0 18px 54px rgba(0, 0, 0, 0.18);
+}
+
+.stats-band {
+  position: relative;
+}
+
+.stats-band::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background:
+    linear-gradient(90deg, rgba(124, 58, 237, 0.09), transparent 34%),
+    linear-gradient(270deg, rgba(6, 182, 212, 0.08), transparent 30%);
+}
+
+.testimonial-avatar {
+  width: 4rem;
+  height: 4rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 0.5rem;
+  object-fit: cover;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.34);
+}
+
+.faq-list {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.faq-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.faq-trigger {
+  display: flex;
+  width: 100%;
+  min-height: 5.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: 1.25rem;
+  color: white;
+  text-align: left;
+}
+
+.faq-trigger > span:first-child {
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.faq-icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  color: #67e8f9;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.faq-trigger:hover .faq-icon {
+  border-color: rgba(103, 232, 249, 0.36);
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.faq-answer {
+  max-width: 42rem;
+  padding: 0 3.75rem 1.5rem 0;
+  color: #a8b4c7;
+  line-height: 1.8;
+}
+
+.cta-band::before {
+  position: absolute;
+  inset: -1px 0 auto;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.8), rgba(6, 182, 212, 0.72), transparent);
+}
+
+.text-slate-500 {
+  color: #8290a5;
+}
+
+@media (max-width: 639px) {
+  .section-shell {
+    width: min(100% - 24px, 1220px);
+  }
+
+  .hero-console-crop::after {
+    height: 42%;
+  }
+
+  .faq-answer {
+    padding-right: 0;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: #0b0f1c;
+    backdrop-filter: none;
+  }
+}

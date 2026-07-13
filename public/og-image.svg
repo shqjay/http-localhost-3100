@@ -1,0 +1,18 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#050816"/>
+  <circle cx="210" cy="110" r="330" fill="#7C3AED" opacity=".32"/>
+  <circle cx="980" cy="160" r="280" fill="#3B82F6" opacity=".25"/>
+  <circle cx="760" cy="550" r="260" fill="#06B6D4" opacity=".18"/>
+  <rect x="100" y="96" width="1000" height="438" rx="42" fill="white" opacity=".08" stroke="white" stroke-opacity=".18"/>
+  <text x="150" y="270" fill="white" font-family="Inter, Arial, sans-serif" font-size="112" font-weight="900">AstraOS</text>
+  <text x="154" y="350" fill="#94A3B8" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="500">自主营收智能系统</text>
+  <path d="M154 424H498" stroke="url(#g)" stroke-width="12" stroke-linecap="round"/>
+  <path d="M154 466H394" stroke="white" stroke-opacity=".24" stroke-width="10" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="g" x1="154" y1="424" x2="498" y2="424" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset=".55" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+</svg>
