@@ -30,6 +30,16 @@ function json(
   return NextResponse.json(body, { status, headers });
 }
 
+function withErrorCode(
+  headers: Record<string, string>,
+  code: string | undefined
+) {
+  return {
+    ...headers,
+    "X-AstraOS-Error-Code": code || "unknown"
+  };
+}
+
 function getRequestHeaders(request: Request) {
   try {
     return getCorsHeaders(request);
@@ -122,7 +132,7 @@ export async function POST(request: Request) {
       return json(
         { error: "注册服务暂时不可用" },
         503,
-        headers
+        withErrorCode(headers, lookupError.code)
       );
     }
 
@@ -165,7 +175,11 @@ export async function POST(request: Request) {
       }
 
       console.error("Supabase user insert failed", insertError.message);
-      return json({ error: "注册失败，请稍后重试" }, 500, headers);
+      return json(
+        { error: "注册失败，请稍后重试" },
+        500,
+        withErrorCode(headers, insertError.code)
+      );
     }
 
     const expires = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
