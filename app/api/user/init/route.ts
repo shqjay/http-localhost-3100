@@ -1,0 +1,251 @@
+import { NextResponse } from "next/server";
+import {
+  buildAdminActionUrl,
+  buildAdminEmailHtml,
+  ConfigurationError,
+  ForbiddenOriginError,
+  getCorsHeaders,
+  getEmailConfig,
+  getResendClient,
+  getSupabaseAdmin,
+  isValidQqEmail,
+  normalizeQqEmail,
+  type RegistrationStatus
+} from "@/lib/server/registration";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+type UserRecord = {
+  id: string;
+  email: string;
+  status: RegistrationStatus;
+};
+
+function json(
+  body: Record<string, unknown>,
+  status: number,
+  headers: Record<string, string>
+) {
+  return NextResponse.json(body, { status, headers });
+}
+
+function getRequestHeaders(request: Request) {
+  try {
+    return getCorsHeaders(request);
+  } catch (error) {
+    if (error instanceof ForbiddenOriginError) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function findUser(email: string) {
+  const supabase = getSupabaseAdmin();
+  return supabase
+    .from("users")
+    .select("id, email, status")
+    .eq("email", email)
+    .maybeSingle<UserRecord>();
+}
+
+export function OPTIONS(request: Request) {
+  try {
+    const headers = getRequestHeaders(request);
+
+    if (!headers) {
+      return new NextResponse(null, { status: 403 });
+    }
+
+    return new NextResponse(null, { status: 204, headers });
+  } catch {
+    return new NextResponse(null, { status: 503 });
+  }
+}
+
+export async function POST(request: Request) {
+  let headers: Record<string, string>;
+
+  try {
+    const requestHeaders = getRequestHeaders(request);
+
+    if (!requestHeaders) {
+      return NextResponse.json(
+        { error: "请求来源不被允许" },
+        { status: 403 }
+      );
+    }
+
+    headers = requestHeaders;
+  } catch (error) {
+    console.error("Registration CORS configuration failed", error);
+    return NextResponse.json(
+      { error: "注册服务暂未配置" },
+      { status: 503 }
+    );
+  }
+
+  let payload: unknown;
+
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ error: "请求格式无效" }, 400, headers);
+  }
+
+  const email = normalizeQqEmail(
+    typeof payload === "object" && payload !== null
+      ? (payload as { email?: unknown }).email
+      : undefined
+  );
+
+  if (!email) {
+    return json({ error: "邮箱不能为空" }, 400, headers);
+  }
+
+  if (!isValidQqEmail(email)) {
+    return json(
+      { error: "请输入有效的 QQ 邮箱" },
+      400,
+      headers
+    );
+  }
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const { data: existingUser, error: lookupError } =
+      await findUser(email);
+
+    if (lookupError) {
+      console.error("Supabase user lookup failed", lookupError.message);
+      return json(
+        { error: "注册服务暂时不可用" },
+        503,
+        headers
+      );
+    }
+
+    if (existingUser) {
+      return json(
+        {
+          success: true,
+          approved: existingUser.status === "approved",
+          status: existingUser.status
+        },
+        200,
+        headers
+      );
+    }
+
+    const { data: newUser, error: insertError } = await supabase
+      .from("users")
+      .insert({
+        email,
+        status: "pending"
+      })
+      .select("id, email, status")
+      .single<UserRecord>();
+
+    if (insertError) {
+      if (insertError.code === "23505") {
+        const { data: concurrentUser } = await findUser(email);
+
+        if (concurrentUser) {
+          return json(
+            {
+              success: true,
+              approved: concurrentUser.status === "approved",
+              status: concurrentUser.status
+            },
+            200,
+            headers
+          );
+        }
+      }
+
+      console.error("Supabase user insert failed", insertError.message);
+      return json({ error: "注册失败，请稍后重试" }, 500, headers);
+    }
+
+    const expires = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
+    const approveUrl = buildAdminActionUrl(
+      email,
+      "approve",
+      expires
+    );
+    const rejectUrl = buildAdminActionUrl(
+      email,
+      "reject",
+      expires
+    );
+    const { adminEmail, fromEmail } = getEmailConfig();
+    const requestedAt = new Intl.DateTimeFormat("zh-CN", {
+      dateStyle: "medium",
+      timeStyle: "medium",
+      timeZone: "Asia/Shanghai"
+    }).format(new Date());
+
+    const { error: emailError } = await getResendClient().emails.send({
+      from: fromEmail,
+      to: [adminEmail],
+      subject: "【AstraOS】新用户注册待审核：" + email,
+      html: buildAdminEmailHtml({
+        email,
+        approveUrl,
+        rejectUrl,
+        requestedAt
+      })
+    });
+
+    if (emailError) {
+      console.error(
+        "Resend notification failed",
+        emailError.message
+      );
+      const { error: rollbackError } = await supabase
+        .from("users")
+        .delete()
+        .eq("id", newUser.id);
+
+      if (rollbackError) {
+        console.error(
+          "Registration rollback failed",
+          rollbackError.message
+        );
+      }
+
+      return json(
+        { error: "通知发送失败，请稍后重试" },
+        502,
+        headers
+      );
+    }
+
+    return json(
+      {
+        success: true,
+        approved: false,
+        status: "pending"
+      },
+      201,
+      headers
+    );
+  } catch (error) {
+    if (error instanceof ConfigurationError) {
+      console.error("Registration service is not configured");
+      return json(
+        { error: "注册服务暂未配置" },
+        503,
+        headers
+      );
+    }
+
+    console.error("Registration request failed", error);
+    return json(
+      { error: "服务器错误，请稍后重试" },
+      500,
+      headers
+    );
+  }
+}

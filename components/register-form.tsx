@@ -17,7 +17,7 @@ export function RegisterForm() {
     event.preventDefault();
     const normalizedEmail = email.trim().toLowerCase();
 
-    if (!/^[^@\s]+@qq\.com$/.test(normalizedEmail)) {
+    if (!/^\d{5,12}@qq\.com$/.test(normalizedEmail)) {
       setError("请使用有效的 QQ 邮箱注册");
       return;
     }
