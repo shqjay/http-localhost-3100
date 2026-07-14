@@ -11,19 +11,23 @@ const siteUrl = (
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const updatedAt = new Date();
-
-  return [
+  const entries: MetadataRoute.Sitemap = [
     {
       url: siteUrl,
       lastModified: updatedAt,
       changeFrequency: "weekly",
       priority: 1
-    },
-    {
+    }
+  ];
+
+  if (process.env.GITHUB_ACTIONS !== "true") {
+    entries.push({
       url: siteUrl + "/register/",
       lastModified: updatedAt,
       changeFrequency: "monthly",
       priority: 0.8
-    }
-  ];
+    });
+  }
+
+  return entries;
 }

@@ -43,7 +43,7 @@ function document(
     "body{margin:0;min-height:100vh;display:grid;place-items:center;background:#050816;color:#fff;font-family:Inter,Arial,sans-serif;padding:24px;box-sizing:border-box}",
     "main{width:min(440px,100%);border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);padding:32px;border-radius:12px;box-sizing:border-box}",
     "h1{font-size:22px;margin:0 0 12px}p{margin:0;color:#94a3b8;line-height:1.7}",
-    "form{margin-top:24px}button{width:100%;height:46px;border:0;border-radius:7px;background:#fff;color:#050816;font-weight:700;cursor:pointer}",
+    "form{margin-top:24px}label{display:block;margin-bottom:8px;color:#cbd5e1;font-size:13px;line-height:1.6}input[type=text]{width:100%;height:46px;margin-bottom:14px;border:1px solid rgba(255,255,255,.16);border-radius:7px;background:rgba(255,255,255,.06);color:#fff;padding:0 12px;box-sizing:border-box;outline:none}input[type=text]:focus{border-color:#67e8f9}button{width:100%;height:46px;border:0;border-radius:7px;background:#fff;color:#050816;font-weight:700;cursor:pointer}",
     "</style>",
     "</head>",
     "<body><main>",
@@ -84,6 +84,8 @@ function confirmationPage(input: ReviewInput) {
     input.action === "approve" ? "确认同意申请" : "确认拒绝申请";
   const button =
     input.action === "approve" ? "确认同意" : "确认拒绝";
+  const confirmationPhrase =
+    (input.action === "approve" ? "同意 " : "拒绝 ") + input.email;
 
   const content = [
     "<h1>" + htmlEscape(title) + "</h1>",
@@ -101,6 +103,10 @@ function confirmationPage(input: ReviewInput) {
     '<input type="hidden" name="signature" value="' +
       htmlEscape(input.signature) +
       '">',
+    "<label for=\"confirmation\">请输入 <strong>" +
+      htmlEscape(confirmationPhrase) +
+      "</strong> 完成人工确认</label>",
+    '<input id="confirmation" type="text" name="confirmation" required autocomplete="off" spellcheck="false">',
     "<button type=\"submit\">" + htmlEscape(button) + "</button>",
     "</form>"
   ].join("");
@@ -208,6 +214,21 @@ export async function POST(request: Request) {
     return messagePage(
       "请求无效",
       "审核参数不完整或格式错误。",
+      400
+    );
+  }
+
+  const confirmation =
+    typeof formData.get("confirmation") === "string"
+      ? String(formData.get("confirmation")).trim()
+      : "";
+  const expectedConfirmation =
+    (input.action === "approve" ? "同意 " : "拒绝 ") + input.email;
+
+  if (confirmation !== expectedConfirmation) {
+    return messagePage(
+      "需要人工确认",
+      "请输入完整确认短语：" + expectedConfirmation,
       400
     );
   }

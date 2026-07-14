@@ -31,14 +31,17 @@ jobs:
           static_site_generator: next
       - name: Install dependencies
         run: npm ci
-      - name: Prepare static export
-        run: mv app/api /tmp/astraos-api
+      - name: Prepare static marketing export
+        run: |
+          mv app/api /tmp/astraos-api
+          mv app/register /tmp/astraos-register
+          mv app/workspace /tmp/astraos-workspace
       - name: Build static site
         run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: https://shqjay.github.io/http-localhost-3100
           NEXT_PUBLIC_BASE_PATH: /http-localhost-3100
-          NEXT_PUBLIC_REGISTRATION_API_URL: https://http-localhost-3100.vercel.app/api/user/init
+          NEXT_PUBLIC_REGISTRATION_URL: https://http-localhost-3100.vercel.app/register
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:

@@ -47,7 +47,8 @@ import {
 import { cn } from "@/lib/cn";
 
 const assetPrefix = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const registerUrl = assetPrefix + "/register/";
+const registerUrl =
+  process.env.NEXT_PUBLIC_REGISTRATION_URL ?? assetPrefix + "/register/";
 
 const navItems = ["Features", "Showcase", "Timeline", "Pricing", "FAQ"];
 const navLabels: Record<string, string> = {

@@ -1,27 +1,70 @@
-# AstraOS 注册后端配置
+# AstraOS 后端与情报系统配置
 
-## 1. 创建 Supabase 数据表
+## 1. 注册和审核
 
-在 Supabase SQL Editor 中运行 supabase/migrations/20260713_create_users.sql。
+`public.users` 保存 QQ 邮箱和 `pending / approved / rejected` 审核状态。密码由 Supabase Auth 哈希保存，不会写入项目数据库或日志。
 
-该表只允许服务端 service_role 访问，浏览器无法直接读取或修改申请数据。
+新申请通过 Resend 向管理员发送审核链接。为了防止邮箱安全扫描器自动提交表单，管理员必须在确认页手动输入：
 
-## 2. 配置 Resend
+- 同意：`同意 申请邮箱`
+- 拒绝：`拒绝 申请邮箱`
 
-1. 在 Resend 验证发件域名。
-2. 创建 API Key。
-3. 将验证后的发件地址写入 RESEND_FROM_EMAIL。
+只有确认短语、签名和有效期全部正确时，服务器才更新状态。
 
-## 3. 配置 Vercel 环境变量
+## 2. 情报数据
 
-根据 .env.example 在 Vercel 项目中添加所有必填变量，然后重新部署。
+服务器自动创建私有 Supabase Storage 桶 `astra-intelligence`。每个认证账号使用独立路径：
 
-SUPABASE_SERVICE_ROLE_KEY、RESEND_API_KEY 和 ADMIN_ACTION_SECRET 只能配置在服务器环境变量中，不能使用 NEXT_PUBLIC_ 前缀。
+```text
+accounts/{auth-user-id}/state.json
+```
 
-## 4. 工作流程
+浏览器不能直接访问该桶，所有读写均经过已审核会话和服务端 `service_role`。
 
-1. 用户在 /register/ 提交 QQ 邮箱。
-2. Vercel API 将申请写入 Supabase，状态为 pending。
-3. Resend 向管理员发送带签名、7 天有效的同意和拒绝链接。
-4. 管理员点击链接后，Supabase 状态更新为 approved 或 rejected。
-5. 重复提交会直接返回当前审核状态，不会创建重复用户。
+私测版限制：
+
+- 每个账户最多 8 个公开来源。
+- 每个来源扫描间隔 6-168 小时。
+- 每个账户保留最近 100 条信号和 100 条决策。
+- 单次抓取最大 1.5 MB、12 秒超时、最多 3 次重定向。
+
+## 3. 抓取安全
+
+仅允许 HTTP/HTTPS 的 80 或 443 端口。服务器会在每次抓取和重定向前重新解析域名，并阻止：
+
+- localhost、本机与局域网域名。
+- 私有、保留、链路本地、组播和云元数据 IP。
+- URL 中的用户名和密码。
+- robots.txt 明确禁止的路径。
+- HTML/XML/JSON 以外的大文件或二进制响应。
+
+用户只应添加自己有权监测的公开来源。系统不会绕过登录、验证码、付费墙或访问控制。
+
+## 4. 决策边界
+
+当前“自主决策”是可解释的建议引擎：它会分类、评分、确定优先级并提出下一步动作，但不会自动修改 CRM、发送邮件、付款或调用第三方写入接口。所有外部执行应在后续集成中保留人工审批和审计记录。
+
+## 5. Vercel 环境变量
+
+必填：
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `ADMIN_EMAIL`
+- `APP_URL`
+- `ADMIN_ACTION_SECRET`
+- `CRON_SECRET`
+
+可选：
+
+- `AUTH_SESSION_SECRET`：单独的登录会话签名密钥；未设置时复用 `ADMIN_ACTION_SECRET`。
+- `ALLOWED_ORIGINS`：逗号分隔的额外前端来源。
+- `NEXT_PUBLIC_REGISTRATION_URL`：静态营销站的注册按钮目标。
+
+所有服务器密钥都不能使用 `NEXT_PUBLIC_` 前缀。
+
+## 6. 自动扫描
+
+`vercel.json` 每天 UTC 01:00 调用 `/api/cron/scan-signals`。Vercel 会把 `CRON_SECRET` 自动放入 `Authorization: Bearer ...` 请求头。Hobby 计划每天执行一次，具体触发时间可能在该小时内浮动。
