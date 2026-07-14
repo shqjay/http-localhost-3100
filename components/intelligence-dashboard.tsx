@@ -12,13 +12,16 @@ import {
   AlertTriangle,
   ArrowUpRight,
   BarChart3,
+  BrainCircuit,
   Check,
+  ChevronDown,
   Clock3,
   Database,
   ExternalLink,
   FileJson,
   Globe2,
   LayoutDashboard,
+  Lightbulb,
   LoaderCircle,
   Plus,
   Radar,
@@ -97,6 +100,24 @@ const priorityConfig: Record<DecisionPriority, { label: string; className: strin
   high: { label: "高", className: "text-amber-300" },
   medium: { label: "中", className: "text-cyan-300" },
   low: { label: "低", className: "text-slate-400" }
+};
+
+const signalLevelConfig: Record<
+  "high" | "medium" | "low",
+  { label: string; className: string }
+> = {
+  high: {
+    label: "HIGH · 高",
+    className: "border-red-300/25 bg-red-400/10 text-red-200"
+  },
+  medium: {
+    label: "MEDIUM · 中",
+    className: "border-amber-300/25 bg-amber-400/10 text-amber-200"
+  },
+  low: {
+    label: "LOW · 低",
+    className: "border-slate-300/15 bg-white/[0.05] text-slate-300"
+  }
 };
 
 const sourceIcons: Record<SourceKind, typeof Globe2> = {
@@ -385,40 +406,115 @@ export function IntelligenceDashboard({
   const renderSignal = (signal: BusinessSignal) => {
     const config = categoryConfig[signal.category];
     const Icon = config.icon;
+    const relatedDecision = state.decisions.find(
+      (decision) => decision.signalId === signal.id
+    );
+    const level =
+      signal.level ??
+      (signal.impactScore >= 72
+        ? "high"
+        : signal.impactScore >= 52
+          ? "medium"
+          : "low");
+    const levelMeta = signalLevelConfig[level];
+    const suggestion =
+      signal.suggestion ??
+      relatedDecision?.recommendedAction ??
+      "当前信号尚未生成明确行动建议。";
+    const isUnread = signal.isRead === false;
+
     return (
-      <article key={signal.id} className="border-b border-white/10 py-6 last:border-b-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={"inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium " + config.className}>
+      <article
+        key={signal.id}
+        className={
+          "flex h-full min-w-0 flex-col rounded-xl border p-5 transition-colors " +
+          (isUnread
+            ? "border-cyan-300/35 bg-cyan-400/[0.07]"
+            : "border-white/10 bg-white/[0.035]")
+        }
+      >
+        <div className="flex items-start justify-between gap-4">
+          <h3 className="min-w-0 text-base font-semibold leading-6 text-white sm:text-lg">
+            {signal.title}
+          </h3>
+          <span
+            className={
+              "shrink-0 rounded-md border px-2 py-1 text-[11px] font-semibold " +
+              levelMeta.className
+            }
+          >
+            {levelMeta.label}
+          </span>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span
+            className={
+              "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium " +
+              config.className
+            }
+          >
             <Icon className="size-3.5" />
             {config.label}
           </span>
           <span className="text-xs text-slate-500">影响 {signal.impactScore}</span>
-          <span className="text-xs text-slate-500">置信度 {signal.confidence}%</span>
+          <span className="text-xs text-slate-500">
+            置信度 {signal.confidence}%
+          </span>
           {signal.isMock && (
-            <span className="rounded border border-amber-300/20 bg-amber-400/10 px-2 py-1 text-xs text-amber-200">
+            <span className="rounded-md border border-amber-300/20 bg-amber-400/10 px-2 py-1 text-xs text-amber-200">
               演示数据
             </span>
           )}
-          <span className="ml-auto text-xs text-slate-600">{formatDate(signal.capturedAt)}</span>
         </div>
-        <h3 className="mt-4 text-base font-semibold leading-6 text-white sm:text-lg">
-          {signal.title}
-        </h3>
-        <p className="mt-2 text-sm leading-6 text-slate-400">{signal.summary}</p>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-slate-500">{signal.sourceName}</span>
-          {signal.isMock ? (
-            <span className="text-xs text-amber-200/80">Mock 抓取器生成</span>
-          ) : (
-            <a
-              href={signal.sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="focus-ring inline-flex items-center gap-1.5 rounded-md text-xs text-cyan-300 transition hover:text-cyan-200"
-            >
-              查看原文
-              <ExternalLink className="size-3.5" />
-            </a>
+
+        <div className="mt-4 border-l-2 border-violet-300/40 bg-black/20 px-4 py-3">
+          <h4 className="flex items-center gap-2 text-sm font-semibold text-violet-200">
+            <BrainCircuit className="size-4" />
+            AI 洞察与建议
+          </h4>
+          <p className="mt-2 text-sm leading-6 text-slate-300">
+            {signal.summary}
+          </p>
+          <p className="mt-3 flex items-start gap-2 text-sm font-medium leading-6 text-emerald-300">
+            <Lightbulb className="mt-1 size-4 shrink-0" />
+            <span>行动建议：{suggestion}</span>
+          </p>
+        </div>
+
+        <details className="group mt-4 border-t border-white/10 pt-3 text-xs text-slate-500">
+          <summary className="focus-ring flex cursor-pointer list-none items-center gap-2 rounded-md py-1 transition hover:text-slate-200 [&::-webkit-details-marker]:hidden">
+            <ScanSearch className="size-4" />
+            <span>查看原始信息（如需核实）</span>
+            <ChevronDown className="ml-auto size-4 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="mt-3 border-l-2 border-white/10 pl-4">
+            <p className="break-words leading-6 text-slate-400">
+              {signal.rawExcerpt || "暂无可核实的原始信息。"}
+            </p>
+            {!signal.isMock && signal.sourceUrl && (
+              <a
+                href={signal.sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="focus-ring mt-3 inline-flex items-center gap-1.5 rounded-md text-cyan-300 transition hover:text-cyan-200"
+              >
+                打开来源
+                <ExternalLink className="size-3.5" />
+              </a>
+            )}
+          </div>
+        </details>
+
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4 text-xs text-slate-600">
+          <span>
+            {signal.sourceName} · {formatDate(signal.capturedAt)}
+          </span>
+          {isUnread && (
+            <span className="inline-flex items-center gap-2 text-cyan-300">
+              <span className="size-1.5 animate-pulse rounded-full bg-cyan-300" />
+              新信号
+            </span>
           )}
         </div>
       </article>
@@ -592,7 +688,13 @@ export function IntelligenceDashboard({
                     </button>
                   }
                 />
-                {state.signals.length ? state.signals.slice(0, 4).map(renderSignal) : <EmptyState icon={Radar} title="添加来源后开始生成信号" />}
+                {state.signals.length ? (
+                  <div className="grid gap-4 pt-5 xl:grid-cols-2">
+                    {state.signals.slice(0, 4).map(renderSignal)}
+                  </div>
+                ) : (
+                  <EmptyState icon={Radar} title="添加来源后开始生成信号" />
+                )}
               </section>
             </div>
           )}
@@ -715,7 +817,13 @@ export function IntelligenceDashboard({
           {view === "signals" && (
             <section className="mt-8">
               <SectionHeader eyebrow="信号流" title={state.signals.length + " 条业务信号"} />
-              {state.signals.length ? state.signals.map(renderSignal) : <EmptyState icon={Radar} title="扫描来源后将在这里显示信号" />}
+              {state.signals.length ? (
+                <div className="grid gap-4 pt-5 lg:grid-cols-2">
+                  {state.signals.map(renderSignal)}
+                </div>
+              ) : (
+                <EmptyState icon={Radar} title="扫描来源后将在这里显示信号" />
+              )}
             </section>
           )}
 

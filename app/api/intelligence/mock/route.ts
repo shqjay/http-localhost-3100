@@ -25,8 +25,11 @@ function hash(value: string) {
 }
 
 function categoryFor(item: MockSignal): SignalCategory {
+  if (item.source.includes("上海证券报")) return "risk";
   if (item.source.includes("竞品")) return "competitive";
-  if (item.source.includes("流量")) return "growth";
+  if (item.source.includes("行业论坛") || item.source.includes("流量")) {
+    return "growth";
+  }
   if (item.source.includes("库存")) return "operational";
   return "operational";
 }
@@ -53,27 +56,26 @@ function buildMockRecords(item: MockSignal, capturedAt: string) {
     fingerprint: MOCK_PREFIX + stableHash,
     contentHash: stableHash,
     title: item.title,
-    summary: item.content,
+    summary: item.summary,
     category: categoryFor(item),
     impactScore: scores.impact,
     confidence: scores.confidence,
     sourceUrl: "",
-    publishedAt: capturedAt,
-    capturedAt,
-    rawExcerpt: JSON.stringify({
-      content: item.content,
-      suggestion: item.suggestion,
-      raw_data: item.raw_data
-    }),
+    publishedAt: item.created_at,
+    capturedAt: item.created_at,
+    rawExcerpt: item.raw_content,
     rawData: item.raw_data,
-    isMock: true
+    isMock: true,
+    suggestion: item.suggestion,
+    level: item.level,
+    isRead: item.is_read
   };
   const decision: IntelligenceDecision = {
     id: randomUUID(),
     sourceId,
     signalId,
     title: "处理建议：" + item.title,
-    rationale: item.content,
+    rationale: item.summary,
     recommendedAction: item.suggestion,
     priority: priorityFor(item.level),
     confidence: scores.confidence,
@@ -91,7 +93,7 @@ export async function POST() {
     const auth = await requireApprovedApiUser();
     if ("response" in auth) return auth.response;
 
-    const mockSignals = await mockFetchSignals();
+    const mockSignals = await mockFetchSignals(auth.user.email);
     let state = await loadIntelligenceState(
       auth.session.subject,
       auth.user.email

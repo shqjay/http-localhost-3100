@@ -36,6 +36,9 @@ export type BusinessSignal = {
   rawExcerpt: string;
   rawData?: unknown;
   isMock?: boolean;
+  suggestion?: string;
+  level?: "high" | "medium" | "low";
+  isRead?: boolean;
 };
 
 export type IntelligenceDecision = {
