@@ -51,6 +51,8 @@ type ApiResponse = {
   error?: string;
   warning?: string | null;
   createdSignal?: boolean;
+  imported?: number;
+  removed?: number;
 };
 
 const navigation: Array<{
@@ -185,6 +187,7 @@ export function IntelligenceDashboard({
   const [refreshing, setRefreshing] = useState(false);
   const [busySourceId, setBusySourceId] = useState<string | null>(null);
   const [busyDecisionId, setBusyDecisionId] = useState<string | null>(null);
+  const [mockAction, setMockAction] = useState<"import" | "clear" | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -201,6 +204,10 @@ export function IntelligenceDashboard({
   );
   const highImpactSignals = useMemo(
     () => state.signals.filter((signal) => signal.impactScore >= 72),
+    [state.signals]
+  );
+  const hasMockSignals = useMemo(
+    () => state.signals.some((signal) => signal.isMock),
     [state.signals]
   );
 
@@ -331,6 +338,50 @@ export function IntelligenceDashboard({
     }
   };
 
+  const importMockSignals = async () => {
+    setMockAction("import");
+    setError("");
+    setNotice("");
+    try {
+      const data = await request("/api/intelligence/mock", { method: "POST" });
+      applyResponse(data);
+      setView("signals");
+      setNotice(
+        data.imported
+          ? "已载入 " + data.imported + " 条演示信号和决策建议。"
+          : "演示信号已经存在，没有重复导入。"
+      );
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error ? requestError.message : "载入演示数据失败"
+      );
+    } finally {
+      setMockAction(null);
+    }
+  };
+
+  const clearMockSignals = async () => {
+    if (!window.confirm("清除全部演示信号和关联决策？")) return;
+    setMockAction("clear");
+    setError("");
+    setNotice("");
+    try {
+      const data = await request("/api/intelligence/mock", { method: "DELETE" });
+      applyResponse(data);
+      setNotice(
+        data.removed
+          ? "已清除 " + data.removed + " 条演示信号。"
+          : "当前没有演示信号。"
+      );
+    } catch (requestError) {
+      setError(
+        requestError instanceof Error ? requestError.message : "清除演示数据失败"
+      );
+    } finally {
+      setMockAction(null);
+    }
+  };
+
   const renderSignal = (signal: BusinessSignal) => {
     const config = categoryConfig[signal.category];
     const Icon = config.icon;
@@ -343,6 +394,11 @@ export function IntelligenceDashboard({
           </span>
           <span className="text-xs text-slate-500">影响 {signal.impactScore}</span>
           <span className="text-xs text-slate-500">置信度 {signal.confidence}%</span>
+          {signal.isMock && (
+            <span className="rounded border border-amber-300/20 bg-amber-400/10 px-2 py-1 text-xs text-amber-200">
+              演示数据
+            </span>
+          )}
           <span className="ml-auto text-xs text-slate-600">{formatDate(signal.capturedAt)}</span>
         </div>
         <h3 className="mt-4 text-base font-semibold leading-6 text-white sm:text-lg">
@@ -351,15 +407,19 @@ export function IntelligenceDashboard({
         <p className="mt-2 text-sm leading-6 text-slate-400">{signal.summary}</p>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
           <span className="text-xs text-slate-500">{signal.sourceName}</span>
-          <a
-            href={signal.sourceUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="focus-ring inline-flex items-center gap-1.5 rounded-md text-xs text-cyan-300 transition hover:text-cyan-200"
-          >
-            查看原文
-            <ExternalLink className="size-3.5" />
-          </a>
+          {signal.isMock ? (
+            <span className="text-xs text-amber-200/80">Mock 抓取器生成</span>
+          ) : (
+            <a
+              href={signal.sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="focus-ring inline-flex items-center gap-1.5 rounded-md text-xs text-cyan-300 transition hover:text-cyan-200"
+            >
+              查看原文
+              <ExternalLink className="size-3.5" />
+            </a>
+          )}
         </div>
       </article>
     );
@@ -540,7 +600,42 @@ export function IntelligenceDashboard({
           {view === "sources" && (
             <div className="mt-8">
               <section>
-                <SectionHeader eyebrow="信号入口" title="添加公开信息来源" />
+                <SectionHeader
+                  eyebrow="信号入口"
+                  title="添加公开信息来源"
+                  action={
+                    <div className="flex flex-wrap gap-2">
+                      {hasMockSignals && (
+                        <button
+                          type="button"
+                          onClick={() => void clearMockSignals()}
+                          disabled={mockAction !== null}
+                          className="focus-ring inline-flex h-10 items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-4 text-sm text-slate-300 transition hover:bg-white/[0.08] hover:text-white disabled:opacity-60"
+                        >
+                          {mockAction === "clear" ? (
+                            <LoaderCircle className="size-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-4" />
+                          )}
+                          清除演示数据
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => void importMockSignals()}
+                        disabled={mockAction !== null}
+                        className="focus-ring inline-flex h-10 items-center gap-2 rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-4 text-sm text-cyan-200 transition hover:bg-cyan-400/15 hover:text-white disabled:opacity-60"
+                      >
+                        {mockAction === "import" ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="size-4" />
+                        )}
+                        载入演示数据
+                      </button>
+                    </div>
+                  }
+                />
                 <form onSubmit={addSource} className="grid gap-4 border-b border-white/10 py-6 lg:grid-cols-[1fr_1.5fr_150px_120px_auto] lg:items-end">
                   <label className="block text-sm text-slate-400">
                     来源名称

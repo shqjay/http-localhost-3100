@@ -34,6 +34,8 @@ export type BusinessSignal = {
   publishedAt: string | null;
   capturedAt: string;
   rawExcerpt: string;
+  rawData?: unknown;
+  isMock?: boolean;
 };
 
 export type IntelligenceDecision = {
